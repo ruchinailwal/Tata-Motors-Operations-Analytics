@@ -146,7 +146,19 @@ An automated workflow retrieves operational metrics and generates AI-powered dai
 
 #### Workflow
 
-Cron Trigger ⬇️ SQL Metrics Extraction ⬇️ GenAI Analysis ⬇️ Email Report Generation
+Cron Trigger
+
+⬇️
+
+SQL Metrics Extraction
+
+⬇️
+
+GenAI Analysis
+
+⬇️
+
+Email Report Generation
 
 ---
 
@@ -162,7 +174,23 @@ An AI-powered workflow retrieves shipment, payment, and employee information and
 
 #### Workflow
 
-Webhook Input ⬇️ Shipment Lookup ⬇️ SQL Data Retrieval ⬇️ GenAI Reasoning ⬇️ Operational Explanation
+Webhook Input
+
+⬇️
+
+Shipment Lookup
+
+⬇️
+
+SQL Data Retrieval
+
+⬇️
+
+GenAI Reasoning
+
+⬇️
+
+Operational Explanation
 
 ---
 
@@ -176,7 +204,9 @@ Webhook Input ⬇️ Shipment Lookup ⬇️ SQL Data Retrieval ⬇️ GenAI Reas
 | EV Expansion              | 6%                   |
 | Supply Chain Optimization | 3%                   |
 
-### Overall Estimated Profitability Improvement: **26%**
+### Overall Estimated Profitability Improvement
+
+**26%**
 
 ---
 
