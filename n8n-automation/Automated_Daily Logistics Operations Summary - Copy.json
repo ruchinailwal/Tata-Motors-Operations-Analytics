@@ -1,0 +1,171 @@
+{
+  "name": "Automated Daily Logistics Operations Summary",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -304,
+        -176
+      ],
+      "id": "a85d1ceb-******* 8****",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n    COUNT(s.SH_ID) AS total_shipments_created,\n\n    SUM(\n        CASE\n            WHEN st.Current_Status = 'DELIVERED'\n            THEN 1\n            ELSE 0\n        END\n    ) AS delivered_shipments,\n\n    SUM(\n        CASE\n            WHEN st.Current_Status != 'DELIVERED'\n            THEN 1\n            ELSE 0\n        END\n    ) AS not_delivered_shipments,\n\n    SUM(\n        CASE\n            WHEN s.SH_DOMAIN = 'Domestic'\n            THEN 1\n            ELSE 0\n        END\n    ) AS domestic_shipments,\n\n    SUM(\n        CASE\n            WHEN s.SH_DOMAIN = 'International'\n            THEN 1\n            ELSE 0\n        END\n    ) AS international_shipments,\n\n    SUM(\n        CASE\n            WHEN s.SER_TYPE = 'Express'\n            THEN 1\n            ELSE 0\n        END\n    ) AS express_shipments,\n\n    SUM(\n        CASE\n            WHEN s.SER_TYPE = 'Regular'\n            THEN 1\n            ELSE 0\n        END\n    ) AS regular_shipments,\n\n    SUM(s.SH_CHARGES) AS total_shipment_charges_collected,\n\n    SUM(\n        CASE\n            WHEN p.Payment_Status != 'PAID'\n            THEN 1\n            ELSE 0\n        END\n    ) AS pending_payments_count\n\nFROM shipment_details s\n\nLEFT JOIN status st\nON s.SH_ID = st.SH_ID\n\nLEFT JOIN payment_details p\nON s.SH_ID = p.SH_ID;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -128,
+        -64
+      ],
+      "id": "6*****-***-e8bfbbbe1c29",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "*****8hEzlGc",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = items[0].json;\n\nreturn [\n  {\n    json: {\n      total_shipments_created: data.total_shipments_created,\n\n      delivered_shipments: data.delivered_shipments,\n\n      not_delivered_shipments: data.not_delivered_shipments,\n\n      domestic_shipments: data.domestic_shipments,\n\n      international_shipments: data.international_shipments,\n\n      express_shipments: data.express_shipments,\n\n      regular_shipments: data.regular_shipments,\n\n      total_shipment_charges_collected:\n        data.total_shipment_charges_collected,\n\n      pending_payments_count:\n        data.pending_payments_count\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        96,
+        32
+      ],
+      "id": "******-***08f594ecc",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\n  \"Content-Type\": \"application/json\"\n}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"llama-3.1-8b-instant\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a professional logistics operations analyst. Generate clean plain-text business emails only. Do not use markdown symbols like *, **, bullets, or hashtags. Use INR currency symbol ₹ instead of $. Keep formatting simple and professional. write regards name sachin singh\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Create a professional daily logistics operations email report using these metrics: Total Shipments: {{$json.total_shipments_created}}, Delivered Shipments: {{$json.delivered_shipments}}, Not Delivered Shipments: {{$json.not_delivered_shipments}}, Domestic Shipments: {{$json.domestic_shipments}}, International Shipments: {{$json.international_shipments}}, Express Shipments: {{$json.express_shipments}}, Regular Shipments: {{$json.regular_shipments}}, Total Shipment Charges: ₹{{$json.total_shipment_charges_collected}}, Pending Payments Count: {{$json.pending_payments_count}}.\"\n    }\n  ],\n  \"temperature\": 0.4\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        320,
+        -16
+      ],
+      "id": "75919242-8860-43c1-8b72-3e1af8c90031",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "*****57uHbILRF",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "operations@tatamotors-demo.com",
+        "toEmail": "manager@tatamotors-demo.com.com",
+        "subject": "Tata Motors  Logistics Report",
+        "emailFormat": "text",
+        "text": "={{$json[\"choices\"][0][\"message\"][\"content\"]}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        480,
+        -176
+      ],
+      "id": "8***-**a-4f35-9e42-0a5fac730d4c",
+      "name": "Send an Email",
+      "webhookId": "d1*****0a3-b65e-e39605628753",
+      "credentials": {
+        "smtp": {
+          "id": "SfvO****SCC5Wp8yB",
+          "name": "SMTP account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Send an Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "5dff41ed-5dc9-4819-9c17-e61b59357b13",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "80c6ff8bb12f520e1da33cb7f055d86cfa498beb03915bf050759f48a32dd6c6"
+  },
+  "id": "wwN9JhOArmDnTPjF",
+  "tags": []
+}

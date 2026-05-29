@@ -1,0 +1,177 @@
+{
+  "name": "Shipment & Payment Issue Explanation Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "shipment-issue",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1472,
+        -96
+      ],
+      "id": "ae3a04f**-**-834b-da82805a0e0a",
+      "name": "Webhook",
+      "webhookId": "*****4e33-86d8-f9fb**a7770a"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n    s.sh_id AS shipment_id,\n    c.c_name AS customer_name,\n    c.c_type AS customer_type,\n    s.sh_content,\n    s.sh_domain,\n    s.ser_type,\n    s.sh_weight,\n    s.sh_charges,\n\n    st.current_status,\n    st.sent_date,\n    st.delivery_date,\n\n    p.amount,\n    p.payment_status,\n    p.payment_mode,\n    p.payment_date\n\nFROM shipment_details s\n\nLEFT JOIN customer c\nON s.c_id = c.c_id\n\nLEFT JOIN status st\nON s.sh_id = st.sh_id\n\nLEFT JOIN payment_details p\nON s.sh_id = p.sh_id\n\nWHERE s.sh_id = {{ $json.body.shipment_id }};",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1216,
+        -16
+      ],
+      "id": "cb80****-***9c-ab16-e4a0b976ab2b",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "v7KeiFh9i0ip***6",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer gsk_ZG9EylpqiK9YjXvlaLITW*******Tcf8paoNgFiGfGvbvfQB"
+            },
+            {
+              "name": "Content-Type",
+              "value": "=application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are an AI logistics support assistant.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Explain shipment and payment issue for shipment {{$json.shipment_id}} with payment status {{$json.payment_status}} and delivery status {{$json.current_status}}.\"\n    }\n  ],\n  \"temperature\": 0.7\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -928,
+        -128
+      ],
+      "id": "26d***-***-**28-e1c93aba641b",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "***-***9-9e55-e4273d612b03",
+              "name": "ai_response",
+              "value": "={{ $json.choices[0].message.content }}",
+              "type": "string"
+            },
+            {
+              "id": "0317b***-***2bd-9e6d-481c23fcf8b7",
+              "name": "",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -720,
+        0
+      ],
+      "id": "6***-***-957c-3dcde4866c58",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{$json.ai_response}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -512,
+        0
+      ],
+      "id": "61e92f54-2874**-**84e-9027d6ac8b68",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "a9***-**-***4b94-8cf0-87547e678681",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a7cfee*********4f803efb0fc5d4bd66409b5f98fbfe9fffc8d1f3f"
+  },
+  "id": "WEOmibdba**uInw",
+  "tags": []
+}
